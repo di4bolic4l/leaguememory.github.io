@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const cards = document.querySelectorAll('.card');
     const timeRemainingDisplay = document.getElementById('time-remaining');
     const flipsDisplay = document.getElementById('flips');
-    const personalRecordDisplay = document.getElementById('personal-record'); // Make sure this element exists in your HTML
+    const personalRecordDisplay = document.getElementById('personal-record');
     let hasFlippedCard = false;
-    let lockBoard = false;
+    let lockBoard = true; // Initially lock the board during the reveal
     let firstCard, secondCard;
     let gameStarted = false;
     let gameTime = 60;
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let matches = 0;
     const totalPairs = cards.length / 2;
 
-    loadAndDisplayRecord(); // Call the function to load and display the record at the start
+    loadAndDisplayRecord();
 
     function flipCard() {
         if (lockBoard) return;
@@ -30,9 +30,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 gameStarted = true;
             }
         } else {
-            hasFlippedCard = false;
             secondCard = this;
+
+            if (gameStarted) {
+                flips++;
+                flipsDisplay.textContent = flips;
+            }
+
             checkForMatch();
+            hasFlippedCard = false;
         }
     }
 
@@ -56,7 +62,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         cards.forEach(card => card.classList.remove('is-flipped'));
         shuffleCards();
         revealCardsBriefly();
-        [hasFlippedCard, lockBoard, gameStarted] = [false, false, false];
+        [hasFlippedCard, lockBoard, gameStarted] = [false, true, false]; // Reset and lock the board
         flips = 0;
         flipsDisplay.textContent = flips;
         matches = 0;
@@ -64,9 +70,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     function checkForMatch() {
         let isMatch = firstCard.dataset.framework === secondCard.dataset.framework;
-
-        flips++;
-        flipsDisplay.textContent = flips;
 
         isMatch ? disableCards() : unflipCards();
     }
@@ -110,13 +113,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         setTimeout(() => {
             cards.forEach(card => card.classList.remove('is-flipped'));
+            lockBoard = false; // Now allow cards to be clicked
         }, 5000);
     }
 
     function handleVictory() {
         console.log("You've matched all the cards!");
-        checkAndSetRecord(); // This is called when the player wins
-        // More victory handling could be added here
+        checkAndSetRecord();
     }
 
     function checkAndSetRecord() {
