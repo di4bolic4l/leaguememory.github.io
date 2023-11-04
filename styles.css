@@ -9,6 +9,7 @@
 }
 
 html {
+    cursor: url('Assets/Cursor/normal.cur'), auto;
     min-height: 100vh;
 }
 
