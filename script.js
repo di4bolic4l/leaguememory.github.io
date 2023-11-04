@@ -1,16 +1,19 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     const cards = document.querySelectorAll('.card');
     const timeRemainingDisplay = document.getElementById('time-remaining');
-    const flipsDisplay = document.getElementById('flips'); // The element to display flips count
+    const flipsDisplay = document.getElementById('flips');
+    const personalRecordDisplay = document.getElementById('personal-record'); // Make sure this element exists in your HTML
     let hasFlippedCard = false;
     let lockBoard = false;
     let firstCard, secondCard;
     let gameStarted = false;
-    let gameTime = 60; // Game time in seconds
+    let gameTime = 60;
     let gameTimer;
-    let flips = 0; // Counter for successful flips (matches)
-    let matches = 0; // Counter for matches
-    const totalPairs = cards.length / 2; // Total pairs of cards
+    let flips = 0;
+    let matches = 0;
+    const totalPairs = cards.length / 2;
+
+    loadAndDisplayRecord(); // Call the function to load and display the record at the start
 
     function flipCard() {
         if (lockBoard) return;
@@ -50,44 +53,40 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     function resetGame() {
         clearInterval(gameTimer);
-        cards.forEach(card => {
-            card.classList.remove('is-flipped');
-            card.addEventListener('click', flipCard);
-        });
+        cards.forEach(card => card.classList.remove('is-flipped'));
         shuffleCards();
         revealCardsBriefly();
         [hasFlippedCard, lockBoard, gameStarted] = [false, false, false];
-        flips = 0; // Reset the flips counter
-        flipsDisplay.textContent = flips; // Update the flips display
-        matches = 0; // Reset the matches counter
+        flips = 0;
+        flipsDisplay.textContent = flips;
+        matches = 0;
     }
 
     function checkForMatch() {
         let isMatch = firstCard.dataset.framework === secondCard.dataset.framework;
-        
-        if (isMatch) {
-            disableCards();
-            flips++;
-            flipsDisplay.textContent = flips;
-            matches++;
-            if (matches === totalPairs) {
-                clearInterval(gameTimer);
-                handleVictory();
-            }
-        } else {
-            unflipCards();
-        }
+
+        flips++;
+        flipsDisplay.textContent = flips;
+
+        isMatch ? disableCards() : unflipCards();
     }
 
     function disableCards() {
         firstCard.removeEventListener('click', flipCard);
         secondCard.removeEventListener('click', flipCard);
+
+        matches++;
+        if (matches === totalPairs) {
+            clearInterval(gameTimer);
+            handleVictory();
+        }
+
         resetBoard();
     }
 
     function unflipCards() {
         lockBoard = true;
-        
+
         setTimeout(() => {
             firstCard.classList.remove('is-flipped');
             secondCard.classList.remove('is-flipped');
@@ -101,14 +100,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     function shuffleCards() {
         cards.forEach(card => {
-            let randomPos = Math.floor(Math.random() * 12);
+            let randomPos = Math.floor(Math.random() * cards.length);
             card.style.order = randomPos;
         });
     }
 
     function revealCardsBriefly() {
         cards.forEach(card => card.classList.add('is-flipped'));
-        
+
         setTimeout(() => {
             cards.forEach(card => card.classList.remove('is-flipped'));
         }, 5000);
@@ -116,12 +115,34 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     function handleVictory() {
         console.log("You've matched all the cards!");
-        // Add more victory handling here if desired
+        checkAndSetRecord(); // This is called when the player wins
+        // More victory handling could be added here
+    }
+
+    function checkAndSetRecord() {
+        const previousRecord = localStorage.getItem('userRecord');
+        const currentRecord = { flips, time: gameTime };
+
+        if (!previousRecord || 
+            flips < JSON.parse(previousRecord).flips || 
+            (flips === JSON.parse(previousRecord).flips && gameTime > JSON.parse(previousRecord).time)) {
+            localStorage.setItem('userRecord', JSON.stringify(currentRecord));
+            loadAndDisplayRecord();
+            alert('New record set!');
+        }
+    }
+
+    function loadAndDisplayRecord() {
+        const record = localStorage.getItem('userRecord');
+        if (record) {
+            const { flips, time } = JSON.parse(record);
+            personalRecordDisplay.textContent = `${flips} Flips, ${time} Sec`;
+        } else {
+            personalRecordDisplay.textContent = 'No record yet';
+        }
     }
 
     cards.forEach(card => card.addEventListener('click', flipCard));
-
     shuffleCards();
     revealCardsBriefly();
 });
-
